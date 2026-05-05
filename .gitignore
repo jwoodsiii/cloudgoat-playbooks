@@ -1,0 +1,26 @@
+# CloudGoat scenario outputs — contain live creds and account info
+start.txt
+findings.json
+
+# Terraform state from CloudGoat deploys
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+.terraform/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Go
+bin/
+*.exe
+
+# Editor
+.DS_Store
+.idea/
+.vscode/
