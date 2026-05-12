@@ -2,6 +2,8 @@
 
 ## Summary
 
+**Implementations:** Python (`attack.py`) — primary; Go (`attack.go`) — final artifact.
+
 Basic IAM user permissions enumeration. Given an AKID, answers the question: what can this user do? Maps managed/inline policies, group memberships, and assumable roles to uncover five hidden flags.
 
 ## Misconfiguration

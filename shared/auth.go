@@ -3,7 +3,14 @@
 //
 // Auth usage:
 //
-//	// Local env aws credentials
+//	// Static credentials from start.txt (most CloudGoat scenarios)
+//	cfg, err := shared.GetConfig(ctx, shared.AuthOptions{
+//	    Region:          "us-east-1",
+//	    AccessKeyID:     cfgMap.MustGet("aws_access_key_id"),
+//	    SecretAccessKey: cfgMap.MustGet("aws_secret_access_key"),
+//	})
+//
+//	// Ambient credentials (pre-assumed via assume-aws shell function)
 //	cfg, err := shared.GetConfig(ctx, shared.AuthOptions{Region: "us-east-1"})
 //
 //	// Explicit assume-role from ambient source identity
@@ -20,6 +27,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
@@ -29,10 +37,17 @@ type AuthOptions struct {
 	// Region is the AWS region for all API calls. Required.
 	Region string
 
+	// AccessKeyID and SecretAccessKey are static credentials read directly
+	// from CloudGoat's start.txt. When both are set, they take precedence
+	// over Profile and ambient credentials. Never hardcode these — always
+	// read them from start.txt via LoadStart() at runtime.
+	AccessKeyID     string
+	SecretAccessKey string
+
 	// RoleARN is the ARN of the role to assume via STS AssumeRole.
-	// If empty, ambient credentials are used (env vars, ~/.aws/credentials,
-	// or instance profile) — useful when you've pre-assumed a role via the
-	// assume-aws shell function.
+	// If set, GetConfig assumes this role using whatever source credentials
+	// are resolved (static, profile, or ambient). If empty, the resolved
+	// source credentials are returned directly.
 	RoleARN string
 
 	// SessionName is the RoleSessionName passed to STS. Appears in
@@ -40,32 +55,45 @@ type AuthOptions struct {
 	SessionName string
 
 	// Profile is the named AWS credentials profile to use as the source
-	// identity for the assume-role call. Ignored if RoleARN is empty.
+	// identity. Ignored if AccessKeyID/SecretAccessKey are set.
 	Profile string
 }
 
 // GetConfig returns an aws.Config for the given options.
 //
-// If opts.RoleARN is set, GetConfig assumes that role via STS and returns a
-// config using the resulting short-lived credentials. The source identity is
-// either opts.Profile (if set) or ambient credentials.
+// Credential resolution order:
+//  1. Static credentials (AccessKeyID + SecretAccessKey) — used when
+//     CloudGoat start.txt provides raw AKID/secret with no role to assume.
+//  2. Named profile (Profile) — used as the source identity for assume-role.
+//  3. Ambient credentials (env vars, ~/.aws/credentials, instance profile).
 //
-// If opts.RoleARN is empty, GetConfig returns a config using ambient
-// credentials directly.
+// If RoleARN is set, the resolved source credentials are used to call
+// STS AssumeRole and the returned config uses the resulting session credentials.
 func GetConfig(ctx context.Context, opts AuthOptions) (aws.Config, error) {
 	if opts.SessionName == "" {
 		opts.SessionName = "cloudgoat-playbook"
 	}
 
-	// Build load options common to both paths
+	// Build source config load options
 	loadOpts := []func(*config.LoadOptions) error{
 		config.WithRegion(opts.Region),
 	}
-	if opts.Profile != "" {
+
+	// Static credentials take precedence over profile and ambient
+	if opts.AccessKeyID != "" && opts.SecretAccessKey != "" {
+		loadOpts = append(loadOpts,
+			config.WithCredentialsProvider(
+				credentials.NewStaticCredentialsProvider(
+					opts.AccessKeyID,
+					opts.SecretAccessKey,
+					"", // no session token for long-lived user creds
+				),
+			),
+		)
+	} else if opts.Profile != "" {
 		loadOpts = append(loadOpts, config.WithSharedConfigProfile(opts.Profile))
 	}
 
-	// Load source config (ambient or named profile)
 	sourceCfg, err := config.LoadDefaultConfig(ctx, loadOpts...)
 	if err != nil {
 		return aws.Config{}, fmt.Errorf("loading source AWS config: %w", err)
@@ -94,3 +122,4 @@ func GetConfig(ctx context.Context, opts AuthOptions) (aws.Config, error) {
 
 	return cfg, nil
 }
+

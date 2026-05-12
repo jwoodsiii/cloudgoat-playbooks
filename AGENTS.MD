@@ -51,6 +51,19 @@ scenarios/
 - Hardcode account IDs, ARNs, or region strings in scripts.
 - Write destructive API calls (`DeleteRole`, `TerminateInstances`, etc.).
 
+## Skills
+
+`/obsidian-to-playbook` — use this whenever we develop python attack automation scripts from Obsidian attack playbooks containing aws cli commands used to complete a scenario. The obsidian note will provide the attack narrative + commands + flags, and this skill will accept the Obsidian note's location and the scenario name to parse the note and generate the python script.
+
+Reference files the skill reads:
+- `skills/obsidian-to-playbook/references/cli-to-boto3.md` — mapping cli commands to boto3, build on this file as new cli commands are converted to the script.
+
+`/playbook-py-to-go` - converts a tested Python playbook into idiomatic Go after the Python version is committed and tested. Reads scenario README as primary source, attack.py as an API reference. Do not execute unless findings.json exists to prove attack.py was tested.
+
+Reference files the skill reads:
+- `skills/playbook-py-to-go/references/sdk-v2-patterns.md` - leverage for guidance on paginators, pointer handling, json parsing patterns
+
+
 ## Adding a new scenario
 
 1. Create `scenarios/<scenario-name>/` directory.
@@ -59,6 +72,9 @@ scenarios/
 4. Write `README.md` — attack narrative, what misconfiguration makes it possible,
    what detection would have caught it.
 5. Rewrite as `attack.go` if the scenario is a Go target (see tracker).
+
+## Writing Go artifacts
+We will only develop Go artifacts after the Python attack scripts have been committed and tested. 
 
 ## The design doc rule
 
