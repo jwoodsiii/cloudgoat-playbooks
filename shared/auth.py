@@ -26,6 +26,8 @@ def get_session(
     profile: str | None = None,
     region: str = "us-east-1",
     session_name: str = "cloudgoat-playbook",
+    aws_access_key_id=None,
+    aws_secret_access_key=None,
 ) -> boto3.Session:
     """
     Returns a boto3 Session.
@@ -50,6 +52,14 @@ def get_session(
     Raises:
         RuntimeError: if STS assume-role fails.
     """
+
+    if aws_access_key_id and aws_secret_access_key:
+        return boto3.Session(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                region_name=region,
+            )
+
     if role_arn is None:
         return boto3.Session(profile_name=profile, region_name=region)
 

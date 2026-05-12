@@ -65,3 +65,11 @@ scenarios/
 Before writing any attack script, write two paragraphs in the scenario README:
 - What misconfiguration you're exploiting and why it exists
 - What the attack path is step by step
+
+## Off-limits paths
+Never read from, write to, or create files under:
+- ~/Library/Mobile Documents/
+- ~/Documents/Obsidian/
+- Any path containing "Obsidian" or "iCloud"
+
+Note content is provided as a read-once input argument only.

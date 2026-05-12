@@ -24,3 +24,6 @@ bin/
 .DS_Store
 .idea/
 .vscode/
+
+# Obsidian Vault
+/Users/jwoodsiii/Library/Mobile Documents/iCloud~md~obsidian/*
