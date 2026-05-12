@@ -56,14 +56,15 @@ aws iam list-groups-for-user --user-name <username>
 
 ### Step 4: Assumable roles
 
-Listing all roles in the account and filtering for `cg-flag4` reveals a role whose `Description` or trust policy document contains the fourth flag.
+Listing all roles in the account and filtering for `cg-flag4` reveals a role whose tags contain the fourth flag.
 
 **AWS CLI:**
 ```
 aws iam list-roles
 aws iam get-role --role-name cg-flag4-role-<cgid>
 ```
-**boto3:** `iam.get_paginator("list_roles")` → `iam.get_role(RoleName=role_name)["Role"]["Description"]`
+**boto3:** `iam.get_paginator("list_roles")` → `iam.list_role_tags(RoleName=name)["Tags"]`
+
 
 **Flag:** `HSM-r0l3_trus1_f0und`
 
@@ -77,7 +78,7 @@ Managed policies are versioned — `get-policy` returns only metadata. Fetching 
 ```
 aws iam get-policy-version --policy-arn <arn> --version-id v1
 ```
-**boto3:** `iam.get_policy_version(PolicyArn=arn, VersionId="v1")["PolicyVersion"]["Document"]`
+**boto3:** `iam.get_policy_version(...)["PolicyVersion"]["Document"]["Statement"][0]["Resource"]`
 
 **Flag:** `HSM{s3cr3t_js0n_str1ng}`
 
